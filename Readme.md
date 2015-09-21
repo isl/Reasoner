@@ -21,6 +21,7 @@ E-mail: isl@ics.forth.gr
 http://www.ics.forth.gr/isl
 
 Authors : Konstantina Konsolaki, Georgios Samaritakis
+
 This file is part of the Reasoner project.
 
  
