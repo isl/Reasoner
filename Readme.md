@@ -34,11 +34,10 @@ Reasoner is a Java API used by [3MEditor](https://github.com/isl/3MEditor) to fi
 
 Build - Run
 ====
-Folders src and lib contain all the files needed to build and create a jar file.
+Folder src contain all the files needed to build and create a jar file. This project is a Maven project, providing all the libs in pom.xml.
 
 Usage
 ====
-The Reasoner dependecies and licenses used are described in file [Reasoner-Dependencies-LicensesUsed.txt](https://github.com/isl/Reasoner/blob/master/Reasoner-Dependencies-LicensesUsed.txt)
 
 Basic usage:
 
