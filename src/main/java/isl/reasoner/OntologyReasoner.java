@@ -1,29 +1,29 @@
 /*
-Copyright 2015 Institute of Computer Science,
-Foundation for Research and Technology - Hellas
+ Copyright 2015 Institute of Computer Science,
+ Foundation for Research and Technology - Hellas
 
-Licensed under the EUPL, Version 1.1 or - as soon they will be approved
-by the European Commission - subsequent versions of the EUPL (the "Licence");
-You may not use this work except in compliance with the Licence.
-You may obtain a copy of the Licence at:
+ Licensed under the EUPL, Version 1.1 or - as soon they will be approved
+ by the European Commission - subsequent versions of the EUPL (the "Licence");
+ You may not use this work except in compliance with the Licence.
+ You may obtain a copy of the Licence at:
 
-http://ec.europa.eu/idabc/eupl
+ http://ec.europa.eu/idabc/eupl
 
-Unless required by applicable law or agreed to in writing, software distributed
-under the Licence is distributed on an "AS IS" basis,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the Licence for the specific language governing permissions and limitations
-under the Licence.
+ Unless required by applicable law or agreed to in writing, software distributed
+ under the Licence is distributed on an "AS IS" basis,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the Licence for the specific language governing permissions and limitations
+ under the Licence.
 
-Contact:  POBox 1385, Heraklio Crete, GR-700 13 GREECE
-Tel:+30-2810-391632
-Fax: +30-2810-391638
-E-mail: isl@ics.forth.gr
-http://www.ics.forth.gr/isl
+ Contact:  POBox 1385, Heraklio Crete, GR-700 13 GREECE
+ Tel:+30-2810-391632
+ Fax: +30-2810-391638
+ E-mail: isl@ics.forth.gr
+ http://www.ics.forth.gr/isl
 
-Authors : Konstantina Konsolaki, Georgios Samaritakis
-This file is part of the Reasoner project.
-*/
+ Authors : Konstantina Konsolaki, Georgios Samaritakis
+ This file is part of the Reasoner project.
+ */
 package isl.reasoner;
 
 import com.hp.hpl.jena.ontology.OntClass;
@@ -35,8 +35,10 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import com.hp.hpl.jena.vocabulary.RDFS;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -52,19 +54,34 @@ import org.mindswap.pellet.jena.PelletReasonerFactory;
  * @author konsolak
  */
 public class OntologyReasoner {
-    
 
     private OntModel modelAll = ModelFactory.createOntologyModel(
             PelletReasonerFactory.THE_SPEC, null);
+    private static final HashMap<String, String> langs = new HashMap<String, String>();
+
+    static {
+        langs.put(".ttl", "Turtle");
+        langs.put(".nt", "N-Triples");
+        langs.put(".nq", "N-Quads");
+        langs.put(".trig", "TriG");
+        langs.put(".rdf", "RDF/XML");
+        langs.put(".owl", "N-Triples");
+        langs.put(".jsonld", "JSON-LD");
+        langs.put(".trdf", "RDF Thrift");
+        langs.put(".rt", "RDF Thrift");
+        langs.put(".rj", "RDF/JSON");
+        langs.put(".trix", "TriX");
+    }
 
     /**
-     * Return  all properties that can be applied to instances of this class.
+     * Return all properties that can be applied to instances of this class.
+     *
      * @param subject
-     * @return An arrayList with the properties that can be applied to the specific subject
+     * @return An arrayList with the properties that can be applied to the
+     * specific subject
      */
     public ArrayList<String> listProperties(String subject) {
         disableLogging();
-
         ArrayList<String> listProps = new ArrayList();
         OntClass c = modelAll.getOntClass(subject);
         if (c != null) {
@@ -96,8 +113,9 @@ public class OntologyReasoner {
 
     /**
      * Initiates the ontology and checks the consistency of the model
-     * @param modelNS 
-     * @return true or false according to the consistency of the model 
+     *
+     * @param modelNS
+     * @return true or false according to the consistency of the model
      */
     public boolean initiateModel(String modelNS) {
         // read the ontology with its imports
@@ -109,12 +127,14 @@ public class OntologyReasoner {
         for (Logger logger : loggers) {
             logger.setLevel(Level.OFF);
         }
-        
+        String ext = modelNS.substring(modelNS.lastIndexOf("."));
+        langs.get(ext);
         OntModel model = ModelFactory.createOntologyModel(
                 PelletReasonerFactory.THE_SPEC, null);
         try {
             model.setDerivationLogging(false);
-            model.read(modelNS);
+            model.read(modelNS, langs.get(ext));
+
         } catch (com.hp.hpl.jena.shared.JenaException e) {
             e.printStackTrace();
             System.out.println("Connection refused!");
@@ -125,12 +145,13 @@ public class OntologyReasoner {
         modelAll = (OntModel) modelAll.add(model);
         KnowledgeBase kb = ((PelletInfGraph) model.getGraph()).getKB();
         boolean consistent = kb.isConsistent();
-        
+
         return consistent;
     }
 
     /**
      * Return all classes of the model
+     *
      * @return an arrayList with all the classes of the model
      */
     public ArrayList<String> getAllClasses() {
@@ -160,9 +181,11 @@ public class OntologyReasoner {
     }
 
     /**
-     * Return  all objects that can be applied to a specific property
-     * @param property 
-     * @return An arrayList with the objects that can be applied to the specific property
+     * Return all objects that can be applied to a specific property
+     *
+     * @param property
+     * @return An arrayList with the objects that can be applied to the specific
+     * property
      */
     public ArrayList<String> listObjects(String property) {
         disableLogging();
@@ -192,7 +215,7 @@ public class OntologyReasoner {
         /*    for (String prop : listObjects) {
          System.out.println(prop);
          }*/
-       
+
         return listObjects;
     }
 
