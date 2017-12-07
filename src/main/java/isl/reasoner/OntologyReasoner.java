@@ -26,16 +26,22 @@
  */
 package isl.reasoner;
 
+import com.hp.hpl.jena.graph.query.Query;
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.OntProperty;
+import com.hp.hpl.jena.ontology.OntResource;
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryExecutionFactory;
+import com.hp.hpl.jena.query.QueryFactory;
+import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import com.hp.hpl.jena.vocabulary.RDFS;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,8 +61,10 @@ import org.mindswap.pellet.jena.PelletReasonerFactory;
  */
 public class OntologyReasoner {
 
-    private OntModel modelAll = ModelFactory.createOntologyModel(
+    OntModel modelAll = ModelFactory.createOntologyModel(
             PelletReasonerFactory.THE_SPEC, null);
+    ;
+
     private static final HashMap<String, String> langs = new HashMap<String, String>();
 
     static {
@@ -142,10 +150,14 @@ public class OntologyReasoner {
         }
 
         model.prepare();
-        modelAll = (OntModel) modelAll.add(model);
-        KnowledgeBase kb = ((PelletInfGraph) model.getGraph()).getKB();
-        boolean consistent = kb.isConsistent();
 
+        OntModel tmp = modelAll;
+        modelAll = model;
+        modelAll.add(tmp);
+
+        KnowledgeBase kb = ((PelletInfGraph) model.getGraph()).getKB();
+
+        boolean consistent = kb.isConsistent();
         return consistent;
     }
 
@@ -157,15 +169,18 @@ public class OntologyReasoner {
     public ArrayList<String> getAllClasses() {
         disableLogging();
         ArrayList<String> listClasses = new ArrayList();
-
         ExtendedIterator<OntClass> listClassesIt = modelAll.listClasses();
-        while (listClassesIt.hasNext()) {
-            OntClass c = (OntClass) listClassesIt.next();
-            if (c.getURI() != null) {
-                listClasses.add(c.getURI());
-            }
-        }
+        try {
 
+            while (listClassesIt.hasNext()) {
+                OntClass c = (OntClass) listClassesIt.next();
+                if (c.getURI() != null) {
+                    listClasses.add(c.getURI());
+                }
+
+            }
+        } catch (Exception ex) {
+        }
         //remove duplicates
         Set setItems = new LinkedHashSet(listClasses);
         listClasses.clear();
@@ -190,13 +205,48 @@ public class OntologyReasoner {
     public ArrayList<String> listObjects(String property) {
         disableLogging();
         ArrayList<String> listObjects = new ArrayList();
-        Property p = modelAll.getProperty(property);
-        StmtIterator it = modelAll.listStatements(p, RDFS.range, (RDFNode) null);
-        if (p != null) {
+//        String query = "select ?range \n"
+//                + "where {\n"
+//                + "<" + property + "> <" + RDFS.range + "> ?range .\n"
+//                + "}                                                    ";
+        OntProperty p2 = modelAll.getOntProperty(property);
+
+        //    StmtIterator it = modelAll.listStatements(p, RDFS.range, (RDFNode) null);
+        if (p2 != null) {
+//            com.hp.hpl.jena.query.Query q = QueryFactory.create(query);
+//
+//            // Create a SPARQL-DL query execution for the given query and
+//            // ontology model
+//            QueryExecution qe = QueryExecutionFactory.create(q, modelAll);
+//
+//            // We want to execute a SELECT query, do it, and return the result set
+//            ResultSet rs = qe.execSelect();
+//            while (rs.hasNext()) {
+//                QuerySolution s = rs.next();
+//                System.out.println("sss->" + s.toString());
+//            }
+            // Print the query for better understanding
+            ExtendedIterator it = p2.listSuperProperties(true);
+            List<Property> list = new ArrayList<Property>();
             while (it.hasNext()) {
-                RDFNode node = (RDFNode) it.next().getObject();
-                listObjects.add(node.toString());
-                OntClass objectClass = modelAll.getOntClass(node.toString());
+                Property node = (Property) it.next();
+                list.add(node);
+                // System.out.println("----> " + node.toString());
+
+            }
+            //remove super proprties to get the direct range
+            //otherwise we get also the range of the super proprties
+            for (Property list1 : list) {
+                p2.removeSuperProperty(list1);
+            }
+
+            RDFNode range = p2.getRange();
+            if (range != null) {
+                System.out.println("range  " + range.toString());
+                //   RDFNode node = (RDFNode) it.next().getObject();
+                //  listObjects.add(node.toString());
+                listObjects.add(range.toString());
+                OntClass objectClass = modelAll.getOntClass(range.toString());
                 if (objectClass != null) {
                     ExtendedIterator<OntClass> listSubClasses = objectClass.listSubClasses();
                     while (listSubClasses.hasNext()) {
@@ -204,7 +254,29 @@ public class OntologyReasoner {
                         listObjects.add(subClass.toString());
                     }
                 }
+
+            } else {
+                for (Property list1 : list) {
+                    p2.addSuperProperty(list1);
+                }
+                //Return also the ranges of the super properties of property
+                //For example at skos prefLabel did not have declared the edfs:range but it 
+                //was subproperty of label. So we should return the range of label as a result.
+                StmtIterator it2 = modelAll.listStatements(p2, RDFS.subPropertyOf, (RDFNode) null);
+                while (it2.hasNext()) {
+                    RDFNode node = (RDFNode) it2.next().getObject();
+                    OntClass subProperty = modelAll.getOntClass(node.toString());
+                    if (subProperty != null) {
+                        StmtIterator rangeClasses = modelAll.listStatements(subProperty, RDFS.range, (RDFNode) null);
+
+                        while (rangeClasses.hasNext()) {
+                            RDFNode node2 = (RDFNode) rangeClasses.next().getObject();
+                            listObjects.add(node2.toString());
+                        }
+                    }
+                }
             }
+
         }
         //remove duplicates
         Set setItems = new LinkedHashSet(listObjects);
