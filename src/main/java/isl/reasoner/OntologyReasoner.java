@@ -52,6 +52,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mindswap.pellet.KnowledgeBase;
+import org.mindswap.pellet.PelletOptions;
 import org.mindswap.pellet.jena.PelletInfGraph;
 import org.mindswap.pellet.jena.PelletReasonerFactory;
 
@@ -139,6 +140,8 @@ public class OntologyReasoner {
         langs.get(ext);
         OntModel model = ModelFactory.createOntologyModel(
                 PelletReasonerFactory.THE_SPEC, null);
+      // PelletOptions.FREEZE_BUILTIN_NAMESPACES =true;
+        //     PelletOptions.IGNORE_UNSUPPORTED_AXIOMS =true;
         try {
             model.setDerivationLogging(false);
             model.read(modelNS, langs.get(ext));
@@ -150,13 +153,11 @@ public class OntologyReasoner {
         }
 
         model.prepare();
-
         OntModel tmp = modelAll;
         modelAll = model;
-        modelAll.add(tmp);
-
+        modelAll.addSubModel(tmp); //test if with subModel works as with add
+        //Reason for this change was that rdfs schema was not loaded with some  schemata. For example skos
         KnowledgeBase kb = ((PelletInfGraph) model.getGraph()).getKB();
-
         boolean consistent = kb.isConsistent();
         return consistent;
     }
@@ -170,6 +171,7 @@ public class OntologyReasoner {
         disableLogging();
         ArrayList<String> listClasses = new ArrayList();
         ExtendedIterator<OntClass> listClassesIt = modelAll.listClasses();
+
         try {
 
             while (listClassesIt.hasNext()) {
@@ -242,7 +244,6 @@ public class OntologyReasoner {
 
             RDFNode range = p2.getRange();
             if (range != null) {
-                System.out.println("range  " + range.toString());
                 //   RDFNode node = (RDFNode) it.next().getObject();
                 //  listObjects.add(node.toString());
                 listObjects.add(range.toString());

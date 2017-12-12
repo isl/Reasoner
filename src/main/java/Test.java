@@ -46,28 +46,29 @@ public class Test {
         OntologyReasoner ont = new OntologyReasoner();
         //ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?file=cidoc_crm_v6.0-draft-2015January.rdfs");
         //  ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?file=CRMext4SKOSandLabel_v1.2.rdfs");
-        //ont.initiateModel("http://139.91.183.3:8084/3MEditor/FetchBinFile?id=50&file=cerif1.6d___24-02-2017122347___13638.ttl");
+     //   ont.initiateModel("http://139.91.183.3:8084/3MEditor/FetchBinFile?id=50&file=cerif1.6i.ttl");
         //  ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?type=target_info&file=dbpedia_2015-10___08-07-2016154850___13972.rdfs");
-        //  ont.initiateModel("http://139.91.183.3:8084/3MEditor/FetchBinFile?id=61&file=cerif1.6h___05-05-2017140043___5221.ttl");
+     //   ont.initiateModel("http://139.91.183.3:8084/3MEditor/FetchBinFile?id=61&file=cerif1.6i.ttl");
         //    ont.initiateModel("https://www.w3.org/2000/01/rdf-schema");
         // ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?id=61&file=skos-test.rdf");
         //  ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?id=61&file=rdf-schema.ttl");
-        //     ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?id=61&file=rdf.rdf");
+        ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?type=target_info&file=rdfs_test.ttl");
         ont.initiateModel("http://139.91.183.3:8084/3MEditor/FetchBinFile?type=target_info&file=cidoc_crm_v6.2-draft-2015August-corretto-UNIVR___05-02-2016141652___506.rdfs");
-//        System.out.println("===============================================================================");
-//        ArrayList<String> listClasses = ont.getAllClasses();
-//        for (String c : listClasses) {
-//            System.out.println(c);
-//        }
-//        System.out.println("===============================================================================");
-//
-//        ArrayList<String> listProps = ont.listProperties("http://www.w3.org/2004/02/skos/core#Collection");
-//        for (String prop : listProps) {
-//            System.out.println(prop);
-//        }
+        ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?type=target_info&file=skos.ttl");
+        System.out.println("===============================================================================");
+        ArrayList<String> listClasses = ont.getAllClasses();
+        for (String c : listClasses) {
+            System.out.println(c);
+        }
+        System.out.println("===============================================================================");
+
+        ArrayList<String> listProps = ont.listProperties("http://www.w3.org/2004/02/skos/core#Collection");
+        for (String prop : listProps) {
+            System.out.println(prop);
+        }
 
         System.out.println("===============================================================================");
-        ArrayList<String> listObjects = ont.listObjects("http://www.cidoc-crm.org/cidoc-crm/P108i_was_produced_by");
+        ArrayList<String> listObjects = ont.listObjects("http://www.w3.org/2004/02/skos/core#prefLabel");
         for (String object : listObjects) {
             System.out.println(object);
         }
