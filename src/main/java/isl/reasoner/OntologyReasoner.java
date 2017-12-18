@@ -117,6 +117,10 @@ public class OntologyReasoner {
         /*   for (String prop : listProps) {
          System.out.println(prop);
          }*/
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            System.out.println("exception subject " + subject);
+//        }
         return listProps;
     }
 
@@ -140,7 +144,7 @@ public class OntologyReasoner {
         langs.get(ext);
         OntModel model = ModelFactory.createOntologyModel(
                 PelletReasonerFactory.THE_SPEC, null);
-      // PelletOptions.FREEZE_BUILTIN_NAMESPACES =true;
+        // PelletOptions.FREEZE_BUILTIN_NAMESPACES =true;
         //     PelletOptions.IGNORE_UNSUPPORTED_AXIOMS =true;
         try {
             model.setDerivationLogging(false);
@@ -205,46 +209,49 @@ public class OntologyReasoner {
      * property
      */
     public ArrayList<String> listObjects(String property) {
+
         disableLogging();
         ArrayList<String> listObjects = new ArrayList();
-//        String query = "select ?range \n"
-//                + "where {\n"
-//                + "<" + property + "> <" + RDFS.range + "> ?range .\n"
-//                + "}                                                    ";
+        //   try {
+        String query = "select ?range \n"
+                + "where {\n"
+                + "<" + property + "> <" + RDFS.range + "> ?range .\n"
+                + "}                                                    ";
         OntProperty p2 = modelAll.getOntProperty(property);
 
         //    StmtIterator it = modelAll.listStatements(p, RDFS.range, (RDFNode) null);
         if (p2 != null) {
-//            com.hp.hpl.jena.query.Query q = QueryFactory.create(query);
-//
-//            // Create a SPARQL-DL query execution for the given query and
-//            // ontology model
-//            QueryExecution qe = QueryExecutionFactory.create(q, modelAll);
-//
-//            // We want to execute a SELECT query, do it, and return the result set
-//            ResultSet rs = qe.execSelect();
-//            while (rs.hasNext()) {
-//                QuerySolution s = rs.next();
-//                System.out.println("sss->" + s.toString());
-//            }
+            com.hp.hpl.jena.query.Query q = QueryFactory.create(query);
+
+            // Create a SPARQL-DL query execution for the given query and
+            // ontology model
+            QueryExecution qe = QueryExecutionFactory.create(q, modelAll);
+
+            // We want to execute a SELECT query, do it, and return the result set
+            ResultSet rs = qe.execSelect();
+            RDFNode range = null;
+            if (rs.hasNext()) {
+                QuerySolution s = rs.next();
+                range = s.get("range");
+            }
             // Print the query for better understanding
-            ExtendedIterator it = p2.listSuperProperties(true);
-            List<Property> list = new ArrayList<Property>();
-            while (it.hasNext()) {
-                Property node = (Property) it.next();
-                list.add(node);
-                // System.out.println("----> " + node.toString());
+//                ExtendedIterator it = p2.listSuperProperties(true);
+//                List<Property> list = new ArrayList<Property>();
+//                while (it.hasNext()) {
+//                    Property node = (Property) it.next();
+//                    list.add(node);
+//                    // System.out.println("----> " + node.toString());
+//
+//                }
+//                //remove super proprties to get the direct range
+//                //otherwise we get also the range of the super proprties
+//                for (Property list1 : list) {
+//                    p2.removeSuperProperty(list1);
+//                }
+//                RDFNode range = p2.getRange();
 
-            }
-            //remove super proprties to get the direct range
-            //otherwise we get also the range of the super proprties
-            for (Property list1 : list) {
-                p2.removeSuperProperty(list1);
-            }
-
-            RDFNode range = p2.getRange();
             if (range != null) {
-                //   RDFNode node = (RDFNode) it.next().getObject();
+                    //   RDFNode node = (RDFNode) it.next().getObject();
                 //  listObjects.add(node.toString());
                 listObjects.add(range.toString());
                 OntClass objectClass = modelAll.getOntClass(range.toString());
@@ -257,9 +264,9 @@ public class OntologyReasoner {
                 }
 
             } else {
-                for (Property list1 : list) {
-                    p2.addSuperProperty(list1);
-                }
+//                    for (Property list1 : list) {
+//                        p2.addSuperProperty(list1);
+//                    }
                 //Return also the ranges of the super properties of property
                 //For example at skos prefLabel did not have declared the edfs:range but it 
                 //was subproperty of label. So we should return the range of label as a result.
@@ -288,7 +295,10 @@ public class OntologyReasoner {
         /*    for (String prop : listObjects) {
          System.out.println(prop);
          }*/
-
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            System.out.println("exception property " + property);
+//        }
         return listObjects;
     }
 
