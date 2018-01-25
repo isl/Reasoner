@@ -26,22 +26,21 @@
  */
 package isl.reasoner;
 
-import com.hp.hpl.jena.graph.query.Query;
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.OntProperty;
-import com.hp.hpl.jena.ontology.OntResource;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QueryFactory;
+import com.hp.hpl.jena.query.QueryParseException;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import com.hp.hpl.jena.vocabulary.RDFS;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,7 +51,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.mindswap.pellet.KnowledgeBase;
-import org.mindswap.pellet.PelletOptions;
 import org.mindswap.pellet.jena.PelletInfGraph;
 import org.mindswap.pellet.jena.PelletReasonerFactory;
 
@@ -88,23 +86,35 @@ public class OntologyReasoner {
      * @param subject
      * @return An arrayList with the properties that can be applied to the
      * specific subject
+     * @throws java.lang.Exception
      */
-    public ArrayList<String> listProperties(String subject) {
+    public ArrayList<String> listProperties(String subject) throws java.lang.Exception, InvalidParameterException, NullPointerException {
         disableLogging();
         ArrayList<String> listProps = new ArrayList();
+        if (Character.isWhitespace(subject.charAt(0)) || Character.isWhitespace(subject.charAt(subject.length() - 1))) {
+            throw new InvalidParameterException("The subject has Leading/Trailing Whitespaces: " + subject);
+        } else if (subject == null) {
+            throw new NullPointerException("The subject is null: " + subject);
+
+        }
         OntClass c = modelAll.getOntClass(subject);
         if (c != null) {
-            ExtendedIterator itq = c.listDeclaredProperties(false);
-            while (itq.hasNext()) {
-                OntProperty property = (OntProperty) itq.next();
-                if (property.getDomain() != null) {
+            try {
+                ExtendedIterator itq = c.listDeclaredProperties(false);
+                while (itq.hasNext()) {
+                    OntProperty property = (OntProperty) itq.next();
+                    if (property.getDomain() != null) {
+                        listProps.add(property.toString());
+                    }
+                }
+                itq = modelAll.listAnnotationProperties();
+                while (itq.hasNext()) {
+                    OntProperty property = (OntProperty) itq.next();
                     listProps.add(property.toString());
                 }
-            }
-            itq = modelAll.listAnnotationProperties();
-            while (itq.hasNext()) {
-                OntProperty property = (OntProperty) itq.next();
-                listProps.add(property.toString());
+            } catch (Exception ex) {
+                throw new Exception("Something went wrong: " +ex.getMessage());
+
             }
         }
 
@@ -151,8 +161,7 @@ public class OntologyReasoner {
             model.read(modelNS, langs.get(ext));
 
         } catch (com.hp.hpl.jena.shared.JenaException e) {
-            e.printStackTrace();
-            System.out.println("Connection refused!");
+            throw new com.hp.hpl.jena.shared.JenaException("Connection refused to connect: "+e.getMessage());
             // e.printStackTrace();
         }
 
@@ -162,6 +171,7 @@ public class OntologyReasoner {
         modelAll.addSubModel(tmp); //test if with subModel works as with add
         //Reason for this change was that rdfs schema was not loaded with some  schemata. For example skos
         KnowledgeBase kb = ((PelletInfGraph) model.getGraph()).getKB();
+
         boolean consistent = kb.isConsistent();
         return consistent;
     }
@@ -170,13 +180,14 @@ public class OntologyReasoner {
      * Return all classes of the model
      *
      * @return an arrayList with all the classes of the model
+     * @throws java.lang.Exception
      */
-    public ArrayList<String> getAllClasses() {
+    public ArrayList<String> getAllClasses() throws Exception {
         disableLogging();
         ArrayList<String> listClasses = new ArrayList();
-        ExtendedIterator<OntClass> listClassesIt = modelAll.listClasses();
 
         try {
+            ExtendedIterator<OntClass> listClassesIt = modelAll.listClasses();
 
             while (listClassesIt.hasNext()) {
                 OntClass c = (OntClass) listClassesIt.next();
@@ -186,6 +197,7 @@ public class OntologyReasoner {
 
             }
         } catch (Exception ex) {
+            throw new Exception("Something went wrong :" + ex.getMessage());
         }
         //remove duplicates
         Set setItems = new LinkedHashSet(listClasses);
@@ -207,34 +219,41 @@ public class OntologyReasoner {
      * @param property
      * @return An arrayList with the objects that can be applied to the specific
      * property
+     * @throws java.lang.Exception
      */
-    public ArrayList<String> listObjects(String property) {
+    public ArrayList<String> listObjects(String property) throws Exception, InvalidParameterException, NullPointerException, QueryParseException {
 
         disableLogging();
         ArrayList<String> listObjects = new ArrayList();
+        if (Character.isWhitespace(property.charAt(0)) || Character.isWhitespace(property.charAt(property.length() - 1))) {
+            throw new InvalidParameterException("The property has Leading/Trailing Whitespaces: " + property);
+        } else if (property == null) {
+            throw new NullPointerException("The property is null: " + property);
+
+        }
         //   try {
         String query = "select ?range \n"
                 + "where {\n"
                 + "<" + property + "> <" + RDFS.range + "> ?range .\n"
                 + "}                                                    ";
         OntProperty p2 = modelAll.getOntProperty(property);
-
         //    StmtIterator it = modelAll.listStatements(p, RDFS.range, (RDFNode) null);
         if (p2 != null) {
-            com.hp.hpl.jena.query.Query q = QueryFactory.create(query);
+            try {
+                com.hp.hpl.jena.query.Query q = QueryFactory.create(query);
 
-            // Create a SPARQL-DL query execution for the given query and
-            // ontology model
-            QueryExecution qe = QueryExecutionFactory.create(q, modelAll);
+                // Create a SPARQL-DL query execution for the given query and
+                // ontology model
+                QueryExecution qe = QueryExecutionFactory.create(q, modelAll);
 
-            // We want to execute a SELECT query, do it, and return the result set
-            ResultSet rs = qe.execSelect();
-            RDFNode range = null;
-            if (rs.hasNext()) {
-                QuerySolution s = rs.next();
-                range = s.get("range");
-            }
-            // Print the query for better understanding
+                // We want to execute a SELECT query, do it, and return the result set
+                ResultSet rs = qe.execSelect();
+                RDFNode range = null;
+                if (rs.hasNext()) {
+                    QuerySolution s = rs.next();
+                    range = s.get("range");
+                }
+                // Print the query for better understanding
 //                ExtendedIterator it = p2.listSuperProperties(true);
 //                List<Property> list = new ArrayList<Property>();
 //                while (it.hasNext()) {
@@ -250,39 +269,44 @@ public class OntologyReasoner {
 //                }
 //                RDFNode range = p2.getRange();
 
-            if (range != null) {
+                if (range != null) {
                     //   RDFNode node = (RDFNode) it.next().getObject();
-                //  listObjects.add(node.toString());
-                listObjects.add(range.toString());
-                OntClass objectClass = modelAll.getOntClass(range.toString());
-                if (objectClass != null) {
-                    ExtendedIterator<OntClass> listSubClasses = objectClass.listSubClasses();
-                    while (listSubClasses.hasNext()) {
-                        OntClass subClass = listSubClasses.next();
-                        listObjects.add(subClass.toString());
+                    //  listObjects.add(node.toString());
+                    listObjects.add(range.toString());
+                    OntClass objectClass = modelAll.getOntClass(range.toString());
+                    if (objectClass != null) {
+                        ExtendedIterator<OntClass> listSubClasses = objectClass.listSubClasses();
+                        while (listSubClasses.hasNext()) {
+                            OntClass subClass = listSubClasses.next();
+                            listObjects.add(subClass.toString());
+                        }
                     }
-                }
 
-            } else {
+                } else {
 //                    for (Property list1 : list) {
 //                        p2.addSuperProperty(list1);
 //                    }
-                //Return also the ranges of the super properties of property
-                //For example at skos prefLabel did not have declared the edfs:range but it 
-                //was subproperty of label. So we should return the range of label as a result.
-                StmtIterator it2 = modelAll.listStatements(p2, RDFS.subPropertyOf, (RDFNode) null);
-                while (it2.hasNext()) {
-                    RDFNode node = (RDFNode) it2.next().getObject();
-                    OntClass subProperty = modelAll.getOntClass(node.toString());
-                    if (subProperty != null) {
-                        StmtIterator rangeClasses = modelAll.listStatements(subProperty, RDFS.range, (RDFNode) null);
+                    //Return also the ranges of the super properties of property
+                    //For example at skos prefLabel did not have declared the edfs:range but it 
+                    //was subproperty of label. So we should return the range of label as a result.
+                    StmtIterator it2 = modelAll.listStatements(p2, RDFS.subPropertyOf, (RDFNode) null);
+                    while (it2.hasNext()) {
+                        RDFNode node = (RDFNode) it2.next().getObject();
+                        OntClass subProperty = modelAll.getOntClass(node.toString());
+                        if (subProperty != null) {
+                            StmtIterator rangeClasses = modelAll.listStatements(subProperty, RDFS.range, (RDFNode) null);
 
-                        while (rangeClasses.hasNext()) {
-                            RDFNode node2 = (RDFNode) rangeClasses.next().getObject();
-                            listObjects.add(node2.toString());
+                            while (rangeClasses.hasNext()) {
+                                RDFNode node2 = (RDFNode) rangeClasses.next().getObject();
+                                listObjects.add(node2.toString());
+                            }
                         }
                     }
                 }
+            } catch (QueryParseException ex) {
+                throw new QueryParseException("Error parssing query: " + ex.getMessage(), ex.getLine(), ex.getColumn());
+            } catch (Exception e) {
+                throw new Exception("Error occured " + e.getMessage());
             }
 
         }
@@ -309,4 +333,6 @@ public class OntologyReasoner {
             logger.setLevel(Level.OFF);
         }
     }
+
+  
 }
