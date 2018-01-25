@@ -92,7 +92,7 @@ public class OntologyReasoner {
         disableLogging();
         ArrayList<String> listProps = new ArrayList();
         if (Character.isWhitespace(subject.charAt(0)) || Character.isWhitespace(subject.charAt(subject.length() - 1))) {
-            throw new InvalidParameterException("The subject has Leading/Trailing Whitespaces: " + subject);
+            throw new InvalidParameterException("The subject has Leading/Trailing Whitespaces: \"" + subject+"\"");
         } else if (subject == null) {
             throw new NullPointerException("The subject is null: " + subject);
 
@@ -226,7 +226,7 @@ public class OntologyReasoner {
         disableLogging();
         ArrayList<String> listObjects = new ArrayList();
         if (Character.isWhitespace(property.charAt(0)) || Character.isWhitespace(property.charAt(property.length() - 1))) {
-            throw new InvalidParameterException("The property has Leading/Trailing Whitespaces: " + property);
+            throw new InvalidParameterException("The property has Leading/Trailing Whitespaces: \"" + property +"\"");
         } else if (property == null) {
             throw new NullPointerException("The property is null: " + property);
 
