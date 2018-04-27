@@ -72,7 +72,7 @@ public class OntologyReasoner {
         langs.put(".nq", "N-Quads");
         langs.put(".trig", "TriG");
         langs.put(".rdf", "RDF/XML");
-        langs.put(".owl", "N-Triples");
+        langs.put(".owl", "RDF/XML");
         langs.put(".jsonld", "JSON-LD");
         langs.put(".trdf", "RDF Thrift");
         langs.put(".rt", "RDF Thrift");
@@ -92,7 +92,7 @@ public class OntologyReasoner {
         disableLogging();
         ArrayList<String> listProps = new ArrayList();
         if (Character.isWhitespace(subject.charAt(0)) || Character.isWhitespace(subject.charAt(subject.length() - 1))) {
-            throw new InvalidParameterException("The subject has Leading/Trailing Whitespaces: \"" + subject+"\"");
+            throw new InvalidParameterException("The subject has Leading/Trailing Whitespaces: \"" + subject + "\"");
         } else if (subject == null) {
             throw new NullPointerException("The subject is null: " + subject);
 
@@ -113,7 +113,7 @@ public class OntologyReasoner {
                     listProps.add(property.toString());
                 }
             } catch (Exception ex) {
-                throw new Exception("Something went wrong: " +ex.getMessage());
+                throw new Exception("Something went wrong: " + ex.getMessage());
 
             }
         }
@@ -161,8 +161,15 @@ public class OntologyReasoner {
             model.read(modelNS, langs.get(ext));
 
         } catch (com.hp.hpl.jena.shared.JenaException e) {
-            throw new com.hp.hpl.jena.shared.JenaException("Connection refused to connect: "+e.getMessage());
-            // e.printStackTrace();
+            //   e.printStackTrace();
+            if (e.getMessage().contains("java.io.IOExceptio")) {
+                throw new com.hp.hpl.jena.shared.JenaException("Connection refused to connect: " + e.getMessage());
+            } else if (e.toString().contains("com.hp.hpl.jena.shared.SyntaxError")) {
+                throw new com.hp.hpl.jena.shared.SyntaxError("Wrong file format for extention: " +ext);
+            } else {
+                throw new com.hp.hpl.jena.shared.JenaException("Error: " + e.getMessage());
+
+            }
         }
 
         model.prepare();
@@ -226,7 +233,7 @@ public class OntologyReasoner {
         disableLogging();
         ArrayList<String> listObjects = new ArrayList();
         if (Character.isWhitespace(property.charAt(0)) || Character.isWhitespace(property.charAt(property.length() - 1))) {
-            throw new InvalidParameterException("The property has Leading/Trailing Whitespaces: \"" + property +"\"");
+            throw new InvalidParameterException("The property has Leading/Trailing Whitespaces: \"" + property + "\"");
         } else if (property == null) {
             throw new NullPointerException("The property is null: " + property);
 
@@ -334,5 +341,4 @@ public class OntologyReasoner {
         }
     }
 
-  
 }
