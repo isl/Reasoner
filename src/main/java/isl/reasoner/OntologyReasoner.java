@@ -68,7 +68,7 @@ public class OntologyReasoner {
 
     static {
         langs.put(".ttl", "Turtle");
-        langs.put(".nt", "N-Triples");
+        langs.put(".nt", "N-TRIPLES");
         langs.put(".nq", "N-Quads");
         langs.put(".trig", "TriG");
         langs.put(".rdf", "RDF/XML");
