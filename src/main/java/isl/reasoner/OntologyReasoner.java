@@ -38,8 +38,13 @@ import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.util.FileManager;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 import com.hp.hpl.jena.vocabulary.RDFS;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -144,14 +149,7 @@ public class OntologyReasoner {
         // read the ontology with its imports
         disableLogging();
 
-        //disable logging
-        List<Logger> loggers = Collections.<Logger>list(LogManager.getCurrentLoggers());
-        loggers.add(LogManager.getRootLogger());
-        for (Logger logger : loggers) {
-            logger.setLevel(Level.OFF);
-        }
         String ext = modelNS.substring(modelNS.lastIndexOf("."));
-        langs.get(ext);
         OntModel model = ModelFactory.createOntologyModel(
                 PelletReasonerFactory.THE_SPEC, null);
         // PelletOptions.FREEZE_BUILTIN_NAMESPACES =true;
@@ -165,7 +163,7 @@ public class OntologyReasoner {
             if (e.getMessage().contains("java.io.IOExceptio")) {
                 throw new com.hp.hpl.jena.shared.JenaException("Connection refused to connect: " + e.getMessage());
             } else if (e.toString().contains("com.hp.hpl.jena.shared.SyntaxError")) {
-                throw new com.hp.hpl.jena.shared.SyntaxError("Wrong file format for extention: " +ext);
+                throw new com.hp.hpl.jena.shared.SyntaxError("Wrong file format for extention: " + ext);
             } else {
                 throw new com.hp.hpl.jena.shared.JenaException("Error: " + e.getMessage());
 
@@ -179,6 +177,122 @@ public class OntologyReasoner {
         //Reason for this change was that rdfs schema was not loaded with some  schemata. For example skos
         KnowledgeBase kb = ((PelletInfGraph) model.getGraph()).getKB();
 
+        boolean consistent = kb.isConsistent();
+        return consistent;
+    }
+
+    /**
+     * Initiates the ontology and checks the consistency of the model
+     *
+     * @param modelNS
+     * @param extention
+     * @return true or false according to the consistency of the model
+     */
+    public boolean initiateModelUrl(String modelNS, String extention) {
+        // read the ontology with its imports
+        disableLogging();
+
+        OntModel model = ModelFactory.createOntologyModel(
+                PelletReasonerFactory.THE_SPEC, null);
+        try {
+            model.setDerivationLogging(false);
+            model.read(modelNS, langs.get(extention));
+
+        } catch (com.hp.hpl.jena.shared.JenaException e) {
+            if (e.getMessage().contains("java.io.IOExceptio")) {
+                throw new com.hp.hpl.jena.shared.JenaException("Connection refused to connect: " + e.getMessage());
+            } else if (e.toString().contains("com.hp.hpl.jena.shared.SyntaxError")) {
+                throw new com.hp.hpl.jena.shared.SyntaxError("Wrong file format for extention: " + extention);
+            } else {
+                throw new com.hp.hpl.jena.shared.JenaException("Error: " + e.getMessage());
+            }
+        }
+
+        model.prepare();
+        OntModel tmp = modelAll;
+        modelAll = model;
+        modelAll.addSubModel(tmp); //test if with subModel works as with add
+        //Reason for this change was that rdfs schema was not loaded with some  schemata. For example skos
+        KnowledgeBase kb = ((PelletInfGraph) model.getGraph()).getKB();
+        boolean consistent = kb.isConsistent();
+        return consistent;
+    }
+
+    /**
+     * Initiates the ontology and checks the consistency of the model
+     *
+     * @param schemaFile
+     *
+     * @return true or false according to the consistency of the model
+     */
+    public boolean initiateModel(File schemaFile) throws FileNotFoundException {
+        // read the ontology with its imports
+        disableLogging();
+        InputStream targetStream = new FileInputStream(schemaFile);
+        String filePath = schemaFile.getPath();
+        String extention = filePath.substring(filePath.lastIndexOf("."));
+
+        OntModel model = ModelFactory.createOntologyModel(
+                PelletReasonerFactory.THE_SPEC, null);
+        try {
+            model.setDerivationLogging(false);
+            model.read(targetStream, langs.get(extention));
+
+        } catch (com.hp.hpl.jena.shared.JenaException e) {
+            if (e.getMessage().contains("java.io.IOExceptio")) {
+                throw new com.hp.hpl.jena.shared.JenaException("Connection refused to connect: " + e.getMessage());
+            } else if (e.toString().contains("com.hp.hpl.jena.shared.SyntaxError")) {
+                throw new com.hp.hpl.jena.shared.SyntaxError("Wrong file format for extention: " + extention);
+            } else {
+                throw new com.hp.hpl.jena.shared.JenaException("Error: " + e.getMessage());
+            }
+        }
+
+        model.prepare();
+        OntModel tmp = modelAll;
+        modelAll = model;
+        modelAll.addSubModel(tmp); //test if with subModel works as with add
+        //Reason for this change was that rdfs schema was not loaded with some  schemata. For example skos
+        KnowledgeBase kb = ((PelletInfGraph) model.getGraph()).getKB();
+        boolean consistent = kb.isConsistent();
+        return consistent;
+    }
+
+    /**
+     * Initiates the ontology and checks the consistency of the model
+     *
+     * @param modelNS
+     * @param extention
+     * @return true or false according to the consistency of the model
+     */
+    public boolean initiateModelFileContent(String fileContent, String extention) {
+        // read the ontology with its imports
+        disableLogging();
+
+        OntModel model = ModelFactory.createOntologyModel(
+                PelletReasonerFactory.THE_SPEC, null);
+        InputStream in = FileManager.get().open(fileContent);
+
+        try {
+            model.setDerivationLogging(false);
+            model.read(in, langs.get(extention));
+
+        } catch (com.hp.hpl.jena.shared.JenaException e) {
+            if (e.getMessage().contains("java.io.IOExceptio")) {
+                throw new com.hp.hpl.jena.shared.JenaException("Connection refused to connect: " + e.getMessage());
+            } else if (e.toString().contains("com.hp.hpl.jena.shared.SyntaxError")) {
+                throw new com.hp.hpl.jena.shared.SyntaxError("Wrong file format for extention: " + extention);
+            } else {
+                throw new com.hp.hpl.jena.shared.JenaException("Error: " + e.getMessage());
+            }
+        }
+
+        model.prepare();
+        OntModel tmp = modelAll;
+        modelAll = model;
+        modelAll.addSubModel(tmp); //test if with subModel works as with add
+        //Reason for this change was that rdfs schema was not loaded with some  schemata. For example skos
+        KnowledgeBase kb = ((PelletInfGraph) model.getGraph()).getKB();
         boolean consistent = kb.isConsistent();
         return consistent;
     }
@@ -339,6 +453,7 @@ public class OntologyReasoner {
         for (Logger logger : loggers) {
             logger.setLevel(Level.OFF);
         }
+
     }
 
 }
