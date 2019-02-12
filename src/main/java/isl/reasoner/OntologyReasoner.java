@@ -241,8 +241,13 @@ public class OntologyReasoner {
         try {
             model.setDerivationLogging(false);
             model.read(targetStream, langs.get(extention));
+            NsIterator listNameSpaces = model.listNameSpaces();
+            while(listNameSpaces.hasNext()){
+                String ns = listNameSpaces.next();
+                String prefix = model.getNsURIPrefix(ns);
+                nsPrefixMap.put(ns, prefix);
+            }
             nsPrefixMap = model.getNsPrefixMap();
-
         } catch (com.hp.hpl.jena.shared.JenaException e) {
             if (e.getMessage().contains("java.io.IOExceptio")) {
                 throw new com.hp.hpl.jena.shared.JenaException("Connection refused to connect: " + e.getMessage());
