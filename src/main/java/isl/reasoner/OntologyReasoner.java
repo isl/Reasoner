@@ -247,7 +247,6 @@ public class OntologyReasoner {
                 String prefix = model.getNsURIPrefix(ns);
                 nsPrefixMap.put(ns, prefix);
             }
-            nsPrefixMap = model.getNsPrefixMap();
         } catch (com.hp.hpl.jena.shared.JenaException e) {
             if (e.getMessage().contains("java.io.IOExceptio")) {
                 throw new com.hp.hpl.jena.shared.JenaException("Connection refused to connect: " + e.getMessage());
