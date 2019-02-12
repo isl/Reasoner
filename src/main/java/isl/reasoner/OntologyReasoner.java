@@ -36,6 +36,7 @@ import com.hp.hpl.jena.query.QueryParseException;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.NsIterator;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.util.FileManager;
@@ -49,8 +50,10 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
@@ -157,7 +160,7 @@ public class OntologyReasoner {
         try {
             model.setDerivationLogging(false);
             model.read(modelNS, langs.get(ext));
-
+      
         } catch (com.hp.hpl.jena.shared.JenaException e) {
             //   e.printStackTrace();
             if (e.getMessage().contains("java.io.IOExceptio")) {
@@ -225,7 +228,7 @@ public class OntologyReasoner {
      *
      * @return true or false according to the consistency of the model
      */
-    public boolean initiateModel(File schemaFile) throws FileNotFoundException {
+    public Map<String, String> initiateModel(File schemaFile) throws FileNotFoundException {
         // read the ontology with its imports
         disableLogging();
         InputStream targetStream = new FileInputStream(schemaFile);
@@ -234,9 +237,11 @@ public class OntologyReasoner {
 
         OntModel model = ModelFactory.createOntologyModel(
                 PelletReasonerFactory.THE_SPEC, null);
+        Map<String, String> nsPrefixMap = null;
         try {
             model.setDerivationLogging(false);
             model.read(targetStream, langs.get(extention));
+            nsPrefixMap = model.getNsPrefixMap();
 
         } catch (com.hp.hpl.jena.shared.JenaException e) {
             if (e.getMessage().contains("java.io.IOExceptio")) {
@@ -253,9 +258,9 @@ public class OntologyReasoner {
         modelAll = model;
         modelAll.addSubModel(tmp); //test if with subModel works as with add
         //Reason for this change was that rdfs schema was not loaded with some  schemata. For example skos
-        KnowledgeBase kb = ((PelletInfGraph) model.getGraph()).getKB();
-        boolean consistent = kb.isConsistent();
-        return consistent;
+        //    KnowledgeBase kb = ((PelletInfGraph) model.getGraph()).getKB();
+        //    boolean consistent = kb.isConsistent();
+        return nsPrefixMap;
     }
 
     /**
