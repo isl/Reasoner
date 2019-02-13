@@ -237,15 +237,16 @@ public class OntologyReasoner {
 
         OntModel model = ModelFactory.createOntologyModel(
                 PelletReasonerFactory.THE_SPEC, null);
-        Map<String, String> nsPrefixMap = null;
+        Map<String, String> nsPrefixMap = new <String,String>HashMap();
         try {
             model.setDerivationLogging(false);
-            model.read(targetStream, langs.get(extention));
+            model.read(targetStream, null, langs.get(extention));
             NsIterator listNameSpaces = model.listNameSpaces();
             while(listNameSpaces.hasNext()){
                 String ns = listNameSpaces.next();
                 String prefix = model.getNsURIPrefix(ns);
                 nsPrefixMap.put(ns, prefix);
+                
             }
         } catch (com.hp.hpl.jena.shared.JenaException e) {
             if (e.getMessage().contains("java.io.IOExceptio")) {
@@ -264,6 +265,7 @@ public class OntologyReasoner {
         //Reason for this change was that rdfs schema was not loaded with some  schemata. For example skos
         //    KnowledgeBase kb = ((PelletInfGraph) model.getGraph()).getKB();
         //    boolean consistent = kb.isConsistent();
+        
         return nsPrefixMap;
     }
 
@@ -464,5 +466,8 @@ public class OntologyReasoner {
         }
 
     }
+    
+    
+
 
 }
