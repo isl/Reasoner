@@ -55,9 +55,12 @@ public class Test {
             //    ont.initiateModel("https://www.w3.org/2000/01/rdf-schema");
             // ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?id=61&file=skos-test.rdf");
             //  ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?id=61&file=rdf-schema.ttl");
-            ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?type=target_info&file=rdfs_test.ttl");
-            ont.initiateModel("http://139.91.183.3:8084/3MEditor/FetchBinFile?type=target_info&file=cidoc_crm_v6.2-draft-2015August-corretto-UNIVR___05-02-2016141652___506.rdfs");
-            ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?type=target_info&file=skos.ttl");
+            //  ont.initiateModel("http://139.91.183.54:8084/3MEditor/FetchBinFile?type=target_info&file=skos___14-12-2017154325___8707.rdf");
+            //         ont.initiateModel("http://139.91.183.54:8084/3MEditor/FetchBinFile?type=target_info&file=rdf___14-12-2017143602___5399.rdf");
+            ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?type=target_info&file=cerif1.6i.nt");
+            //   ont.initiateModel("http://139.91.183.54:8084/3MEditor/FetchBinFile?type=target_info&file=rdf___14-12-2017143602___5399.rdf");
+            //  ont.initiateModel("http://139.91.183.3:8084/3MEditor/FetchBinFile?type=target_info&file=cidoc_crm_v6.2-draft-2015August-corretto-UNIVR___05-02-2016141652___506.rdfs");
+            //  ont.initiateModel("http://139.91.183.3/3MEditor/FetchBinFile?type=target_info&file=skos.ttl");
             System.out.println("===============================================================================");
             ArrayList<String> listClasses = ont.getAllClasses();
             for (String c : listClasses) {
@@ -68,10 +71,11 @@ public class Test {
             ArrayList<String> listProps = ont.listProperties("http://www.w3.org/2004/02/skos/core#Collection");
             for (String prop : listProps) {
                 System.out.println(prop);
+                
             }
             
             System.out.println("===============================================================================");
-            ArrayList<String> listObjects = ont.listObjects("http://www.w3.org/2004/02/skos/core#prefLabel");
+            ArrayList<String> listObjects = ont.listObjects("http://www.sealit.gr/ontology/sealit#deFlagged_in");
             for (String object : listObjects) {
                 System.out.println(object);
             }
