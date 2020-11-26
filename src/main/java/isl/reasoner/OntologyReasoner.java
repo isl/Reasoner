@@ -29,9 +29,12 @@ package isl.reasoner;
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.OntProperty;
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QueryParseException;
+import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.NsIterator;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
@@ -46,7 +49,6 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -100,7 +102,22 @@ public class OntologyReasoner {
             throw new NullPointerException("The subject is null: " + subject);
 
         }
+        //use also query , reasoner ignores direct property if isSubproperyOf is defined
+        String query = "select ?property \n"
+                + "where {\n"
+                + "?property <" + RDFS.domain + "> <" + subject + ">\n"
+                + "}";
+
+        QueryExecution qe = QueryExecutionFactory.create(query, modelAll);
+        ResultSet rs = qe.execSelect();
+        while (rs.hasNext()) {
+            QuerySolution s = rs.next();
+
+            String property = s.get("property").toString();
+            listProps.add(property);
+        }
         OntClass c = modelAll.getOntClass(subject);
+
         if (c != null) {
             try {
                 ExtendedIterator itq = c.listDeclaredProperties(false);
