@@ -428,6 +428,10 @@ public class OntologyReasoner {
                         listObjects.add(subClass.toString());
                     }
                 }
+                
+                for (Property list1 : list) {
+                	p2.addSuperProperty(list1);
+                }
 
             } else {
                 for (Property list1 : list) {
