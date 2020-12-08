@@ -428,7 +428,7 @@ public class OntologyReasoner {
                         listObjects.add(subClass.toString());
                     }
                 }
-                
+                // Re-adding the removed SuperPropertes
                 for (Property list1 : list) {
                 	p2.addSuperProperty(list1);
                 }
