@@ -69,7 +69,7 @@ public class OntologyReasoner {
     OntModel modelAll = ModelFactory.createOntologyModel(
             PelletReasonerFactory.THE_SPEC, null);
 
-    private static final HashMap<String, String> langs = new HashMap<String, String>();
+    protected static final HashMap<String, String> langs = new HashMap<String, String>();
 
     static {
         langs.put(".ttl", "Turtle");
@@ -77,6 +77,7 @@ public class OntologyReasoner {
         langs.put(".nq", "N-Quads");
         langs.put(".trig", "TriG");
         langs.put(".rdf", "RDF/XML");
+        langs.put(".rdfs", "RDF/XML");
         langs.put(".owl", "RDF/XML");
         langs.put(".jsonld", "JSON-LD");
         langs.put(".trdf", "RDF Thrift");
