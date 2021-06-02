@@ -10,6 +10,8 @@ import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.vocabulary.RDF;
+import com.hp.hpl.jena.vocabulary.RDFS;
+import org.apache.commons.lang3.tuple.Pair;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -61,20 +63,25 @@ public class InstanceFetcher {
      * Practically, it retrieves of the subjects in triples of the form
      * [?subject rdf:type GIVEN_CLASS_URI]
      * Notice that the method does not apply inference. 
+     * If a given instance does not have an rdfs:label then an empty string is returned
      * 
      * @param classUri the URI of the class
-     * @return the URIs of the instances of the given class */
-    public Collection<String> getInstanceUris(String classUri){
-        Set<String> retCollection=new HashSet<>();
-        String selectQuery="SELECT DISTINCT ?subject "
+     * @return the URIs and the corresponding labels (if they exist) of the instances of the given class */
+    public Collection<Pair<String,String>> getInstanceUris(String classUri){
+        Set<Pair<String,String>> retCollection=new HashSet<>();
+        String selectQuery="SELECT DISTINCT ?subject ?label "
                           +"WHERE { "
-                            +"?subject <"+RDF.type+"> <"+classUri+"> "
+                            +"?subject <"+RDF.type+"> <"+classUri+">. "
+                            +"OPTIONAL{ "
+                                +"?subject <"+RDFS.label+"> ?label. " 
+                            +"} "
                           +"}";
         QueryExecution qe = QueryExecutionFactory.create(selectQuery, this.model);
         ResultSet results = qe.execSelect();
         while (results.hasNext()) {
             QuerySolution result = results.next();
-            retCollection.add(result.get("subject").toString());
+            retCollection.add(Pair.of(result.get("subject").toString(),
+                              (result.get("label")!=null)?result.get("label").toString():""));
         }
         return retCollection;
     }
@@ -85,20 +92,26 @@ public class InstanceFetcher {
      * [?subject rdf:type ?object]
      * The results are returned in the form of a multimap where keys are the URIs of the classes 
      * and values are corresponding instances URIs. 
+     * If a given instance does not have an rdfs:label then an empty string is returned
      * Notice that the method does not apply inference. 
      * 
-     * @return a multimap with class and instance URIs [key: class Uri, values: instances URIs] */
-    public Multimap<String,String> getClassAndInstanceUris(){
-        Multimap<String,String> retMap=TreeMultimap.create();
-        String selectQuery="SELECT DISTINCT ?subject ?object "
+     * @return a multimap with class and instance URIs [key: class Uri, values: instances URIs and their corresponding labels] */
+    public Multimap<String,Pair<String,String>> getClassAndInstanceUris(){
+        Multimap<String,Pair<String,String>> retMap=TreeMultimap.create();
+        String selectQuery="SELECT DISTINCT ?subject ?object ?label "
                           +"WHERE { "
-                            +"?subject <"+RDF.type+"> ?object "
+                            +"?subject <"+RDF.type+"> ?object. "
+                            +"OPTIONAL{ "
+                                +"?subject <"+RDFS.label+"> ?label. "
+                            +"} "
                           +"}";
         QueryExecution qe = QueryExecutionFactory.create(selectQuery, this.model);
         ResultSet results = qe.execSelect();
         while (results.hasNext()) {
             QuerySolution result = results.next();
-            retMap.put(result.get("object").toString(),result.get("subject").toString());
+            retMap.put(result.get("object").toString(),
+                       Pair.of(result.get("subject").toString(),
+                              (result.get("label")!=null)?result.get("label").toString():""));
         }
         return retMap;
     }
@@ -114,11 +127,11 @@ public class InstanceFetcher {
         InstanceFetcher instance=new InstanceFetcher(contents, ".ttl");
         for(String classUri : instance.getClassUris()){
             System.out.println(classUri);
-            for(String instanceUri : instance.getInstanceUris(classUri)){
+            for(Pair<String,String> instanceUri : instance.getInstanceUris(classUri)){
                 System.out.println("\t"+instanceUri);
             }
         }
-        Multimap<String,String> multimap=instance.getClassAndInstanceUris();
+        Multimap<String,Pair<String,String>> multimap=instance.getClassAndInstanceUris();
         for(String classUri : multimap.keySet()){
             System.out.println(classUri+":\t"+multimap.get(classUri));
         }
